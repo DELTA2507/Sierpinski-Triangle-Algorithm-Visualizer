@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      background-size: 50px 50px;
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+      overflow: hidden;
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100px;
+      background: #ffffff;
+      color: black;
+      z-index: 1000;
+    }
+
+    header h1 {
+        margin: 0; 
+        font-size: 1.2rem;
+        padding: 1rem;
+    }
+
+    #info {
+      padding: 0.5rem 1rem;
+      z-index: 1000;
+      font-size: 1rem;
+      text-align: center;
+      user-select: none;
+    }
+    canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+      border-radius: 0;
+    }
+    .dg.ac {
+        top: 9rem !important;
+        z-index: 10 !important;
+    }
+    .header-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 100%;
+    }
+    ul, li, a {
+        list-style: none;
+        text-decoration: none;
+        color: inherit;
+    }
+    nav {
+    height: 100%;
+    display: flex;
+    align-items: stretch;
+    }
+
+    nav ul {
+        display: flex;
+        align-items: stretch;
+        padding-inline: 10px;
+        margin: 0;
+        height: 100%;
+    }
+
+    nav li {
+        display: flex;
+        align-items: stretch;
+        height: 100%;
+    }
+    nav a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+        font-weight: bold;
+        color: inherit;
+        padding-inline: 2rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    @media (prefers-color-scheme: dark) {
+        body {
+            background-color: #000000;
+            background-image:
+            linear-gradient(to right, rgba(255,255,255,0.068) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.068) 1px, transparent 1px);
+        }
+        header {
+            background: #ffffff;
+            color: rgb(0, 0, 0);
+        }
+        #info {
+            background: #111;
+            color: white;
+        }
+        nav a:hover {
+            background-color: rgba(0, 0, 0, 0.865);
+            color: rgb(255, 255, 255);
+            text-decoration: underline;
+        }
+    }
+
+    @media (prefers-color-scheme: light) {
+        body {
+            background-color: #ffffff;
+            background-image:
+            linear-gradient(to right, rgba(0,0,0,0.068) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(0,0,0,0.068) 1px, transparent 1px);
+        }
+        header {
+            background: #000000;
+            color: rgb(255, 255, 255);
+        }
+        #info {
+            background: #f0f0f0;
+            color: black;
+        }
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 0.865);
+            color: black;
+            text-decoration: underline;
+        }
+    }
+
+    @media (max-width: 800px) {
+        .header-container {
+            flex-direction: column;
+            align-items: center;
+        }
+        nav, nav ul, nav li {
+            width: 100%;
+        }
+        nav ul {
+            padding: 0;
+        }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        body {
+            background-color: #000000;
+            background-image:
+            linear-gradient(to right, rgba(255,255,255,0.068) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.068) 1px, transparent 1px);
+        }
+        header {
+            background: #ffffff;
+            color: rgb(0, 0, 0);
+        }
+        #info {
+            background: #111;
+            color: white;
+        }
+    }
+
+    @media (prefers-color-scheme: light) {
+        body {
+            background-color: #ffffff;
+            background-image:
+            linear-gradient(to right, rgba(0,0,0,0.068) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(0,0,0,0.068) 1px, transparent 1px);
+        }
+        header {
+            background: #000000;
+            color: rgb(255, 255, 255);
+        }
+        #info {
+            background: #f0f0f0;
+            color: black;
+        }
+    }
+  </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1>Sierpinski Triangle 3D Visualizer</h1>
+            <nav>
+                <ul>
+                    <li><a href="2d-visualizer.html">2D Visualizer</a></li>
+                    <li><a href="3d-visualizer.html">3D Visualizer</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div id="info">usa mouse para rotar/zoom/pan</div>
+    </header>
+    <canvas id="canvas"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.min.js"></script>
+    <script>
+        const canvas = document.getElementById("canvas")
+        const ctx = canvas.getContext("2d")
+
+        function getDefaultStrokeColor() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? '#ffffff' : '#000000'
+        }
+
+        const config = {
+        depth: 3,
+        zoom: 1,
+        color: getDefaultStrokeColor()
+        }
+
+        let scale = config.zoom
+        let offsetX = 0
+        let offsetY = 0
+        let isDragging = false
+        let dragStartX = 0
+        let dragStartY = 0
+
+        function resizeCanvas() {
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+        render()
+        }
+        window.addEventListener('resize', resizeCanvas)
+        resizeCanvas()
+
+        const gui = new dat.GUI()
+        gui.add(config, 'depth', 0, 8, 1).name("Fractal Depth").onChange(render)
+        gui.add(config, 'zoom', 0.1, 10, 0.01).name("Zoom").onChange(val => {
+        scale = val
+        render()
+        })
+        gui.addColor(config, 'color').name("Stroke Color").onChange(render)
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        if (!gui.__controllers.find(c => c.property === 'color').__input.matches(':focus')) {
+            config.color = e.matches ? '#ffffff' : '#000000'
+            gui.__controllers.find(c => c.property === 'color').setValue(config.color)
+            render()
+        }
+        })
+
+        canvas.addEventListener('wheel', e => {
+        e.preventDefault()
+        const zoomAmount = 0.1
+        if (e.deltaY < 0) {
+            scale = Math.min(scale + zoomAmount, 10)
+        } else {
+            scale = Math.max(0.1, scale - zoomAmount)
+        }
+        config.zoom = parseFloat(scale.toFixed(2))
+        gui.__controllers.find(c => c.property === 'zoom').updateDisplay()
+        render()
+        })
+
+        canvas.addEventListener('mousedown', e => {
+        isDragging = true
+        dragStartX = e.clientX
+        dragStartY = e.clientY
+        })
+        canvas.addEventListener('mouseup', () => isDragging = false)
+        canvas.addEventListener('mouseout', () => isDragging = false)
+        canvas.addEventListener('mousemove', e => {
+        if (!isDragging) return
+        const dx = e.clientX - dragStartX
+        const dy = e.clientY - dragStartY
+        dragStartX = e.clientX
+        dragStartY = e.clientY
+        offsetX += dx / scale
+        offsetY += dy / scale
+        render()
+        })
+
+        function drawTriangle(x, y, size) {
+        ctx.beginPath()
+        ctx.moveTo((x + offsetX) * scale, (y + offsetY) * scale)
+        ctx.lineTo((x + size / 2 + offsetX) * scale, (y + size * Math.sqrt(3) / 2 + offsetY) * scale)
+        ctx.lineTo((x - size / 2 + offsetX) * scale, (y + size * Math.sqrt(3) / 2 + offsetY) * scale)
+        ctx.closePath()
+        ctx.strokeStyle = config.color
+        ctx.stroke()
+        }
+
+        function sierpinski(x, y, size, depth) {
+        if (depth === 0) {
+            drawTriangle(x, y, size)
+            return
+        }
+        const newSize = size / 2
+        sierpinski(x, y, newSize, depth - 1)
+        sierpinski(x - newSize / 2, y + newSize * Math.sqrt(3) / 2, newSize, depth - 1)
+        sierpinski(x + newSize / 2, y + newSize * Math.sqrt(3) / 2, newSize, depth - 1)
+        }
+
+        function clear() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        }
+
+        function render() {
+        clear()
+        sierpinski(canvas.width / 2, 20, canvas.width * 0.8, parseInt(config.depth))
+        }
+
+        render()
+    </script>
+</body>
+</html>

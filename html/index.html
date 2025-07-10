@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sierpinski 3D (Offline Friendly)</title>
+  <style>
+    body { margin: 0; background: #ffffff; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.min.js"></script>
+
+  <script>
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+    const renderer = new THREE.WebGLRenderer({ antialias: true })
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    document.body.appendChild(renderer.domElement)
+
+    camera.position.set(2, 2, 4)
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true
+    controls.dampingFactor = 0.1
+
+    const material = new THREE.MeshNormalMaterial({ wireframe: true })
+
+    let tetraGroup = new THREE.Group()
+    scene.add(tetraGroup)
+
+    function createTetrahedron(size) {
+      const geometry = new THREE.TetrahedronGeometry(size)
+      return new THREE.Mesh(geometry, material)
+    }
+
+    function sierpinskiTetrahedron(level, size, pos, group) {
+      if (level === 0) {
+        const t = createTetrahedron(size)
+        t.position.copy(pos)
+        group.add(t)
+        return
+      }
+
+      const offset = size / 2
+      const positions = [
+        new THREE.Vector3(pos.x, pos.y + offset, pos.z),
+        new THREE.Vector3(pos.x - offset, pos.y - offset, pos.z - offset),
+        new THREE.Vector3(pos.x + offset, pos.y - offset, pos.z - offset),
+        new THREE.Vector3(pos.x, pos.y - offset, pos.z + offset),
+      ]
+
+      for (let p of positions) {
+        sierpinskiTetrahedron(level - 1, size / 2, p, group)
+      }
+    }
+
+    const settings = { depth: 2 }
+
+    function regenerate() {
+      scene.remove(tetraGroup)
+      tetraGroup = new THREE.Group()
+      sierpinskiTetrahedron(settings.depth, 1, new THREE.Vector3(0, 0, 0), tetraGroup)
+      scene.add(tetraGroup)
+    }
+
+    const gui = new dat.GUI()
+    gui.add(settings, 'depth', 0, 4, 1).name("Fractal Depth").onChange(regenerate)
+
+    regenerate()
+
+    function animate() {
+      requestAnimationFrame(animate)
+      controls.update()
+      renderer.render(scene, camera)
+    }
+
+    animate()
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight
+      camera.updateProjectionMatrix()
+      renderer.setSize(window.innerWidth, window.innerHeight)
+    })
+  </script>
+</body>
+</html>
