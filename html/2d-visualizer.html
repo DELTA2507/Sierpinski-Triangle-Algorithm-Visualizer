@@ -191,118 +191,169 @@
                 </ul>
             </nav>
         </div>
-        <div id="info">usa mouse para rotar/zoom/pan</div>
+        <div id="info">usa mouse o touch para rotar/zoom/pan</div>
     </header>
     <canvas id="canvas"></canvas>
 
     <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.min.js"></script>
     <script>
-        const canvas = document.getElementById("canvas")
-        const ctx = canvas.getContext("2d")
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
 
         function getDefaultStrokeColor() {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? '#ffffff' : '#000000'
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? '#ffffff' : '#000000';
         }
 
         const config = {
-        depth: 3,
-        zoom: 1,
-        color: getDefaultStrokeColor()
-        }
+            depth: 3,
+            zoom: 1,
+            color: getDefaultStrokeColor(),
+            mode: 'recursive',
+            iterations: 10000,
+            animate: false
+        };
 
-        let scale = config.zoom
-        let offsetX = 0
-        let offsetY = 0
-        let isDragging = false
-        let dragStartX = 0
-        let dragStartY = 0
+        let scale = config.zoom;
+        let offsetX = 0;
+        let offsetY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let chaosX = Math.random() * window.innerWidth;
+        let chaosY = Math.random() * window.innerHeight;
 
         function resizeCanvas() {
-        canvas.width = window.innerWidth
-        canvas.height = window.innerHeight
-        render()
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - 100;
+            render();
         }
-        window.addEventListener('resize', resizeCanvas)
-        resizeCanvas()
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-        const gui = new dat.GUI()
-        gui.add(config, 'depth', 0, 8, 1).name("Fractal Depth").onChange(render)
-        gui.add(config, 'zoom', 0.1, 10, 0.01).name("Zoom").onChange(val => {
-        scale = val
-        render()
-        })
-        gui.addColor(config, 'color').name("Stroke Color").onChange(render)
-
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-        if (!gui.__controllers.find(c => c.property === 'color').__input.matches(':focus')) {
-            config.color = e.matches ? '#ffffff' : '#000000'
-            gui.__controllers.find(c => c.property === 'color').setValue(config.color)
-            render()
+        function clear() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
-        })
-
-        canvas.addEventListener('wheel', e => {
-        e.preventDefault()
-        const zoomAmount = 0.1
-        if (e.deltaY < 0) {
-            scale = Math.min(scale + zoomAmount, 10)
-        } else {
-            scale = Math.max(0.1, scale - zoomAmount)
-        }
-        config.zoom = parseFloat(scale.toFixed(2))
-        gui.__controllers.find(c => c.property === 'zoom').updateDisplay()
-        render()
-        })
-
-        canvas.addEventListener('mousedown', e => {
-        isDragging = true
-        dragStartX = e.clientX
-        dragStartY = e.clientY
-        })
-        canvas.addEventListener('mouseup', () => isDragging = false)
-        canvas.addEventListener('mouseout', () => isDragging = false)
-        canvas.addEventListener('mousemove', e => {
-        if (!isDragging) return
-        const dx = e.clientX - dragStartX
-        const dy = e.clientY - dragStartY
-        dragStartX = e.clientX
-        dragStartY = e.clientY
-        offsetX += dx / scale
-        offsetY += dy / scale
-        render()
-        })
 
         function drawTriangle(x, y, size) {
-        ctx.beginPath()
-        ctx.moveTo((x + offsetX) * scale, (y + offsetY) * scale)
-        ctx.lineTo((x + size / 2 + offsetX) * scale, (y + size * Math.sqrt(3) / 2 + offsetY) * scale)
-        ctx.lineTo((x - size / 2 + offsetX) * scale, (y + size * Math.sqrt(3) / 2 + offsetY) * scale)
-        ctx.closePath()
-        ctx.strokeStyle = config.color
-        ctx.stroke()
+            ctx.beginPath();
+            ctx.moveTo((x + offsetX) * scale, (y + offsetY) * scale);
+            ctx.lineTo((x + size / 2 + offsetX) * scale, (y + size * Math.sqrt(3) / 2 + offsetY) * scale);
+            ctx.lineTo((x - size / 2 + offsetX) * scale, (y + size * Math.sqrt(3) / 2 + offsetY) * scale);
+            ctx.closePath();
+            ctx.strokeStyle = config.color;
+            ctx.stroke();
         }
 
         function sierpinski(x, y, size, depth) {
-        if (depth === 0) {
-            drawTriangle(x, y, size)
-            return
-        }
-        const newSize = size / 2
-        sierpinski(x, y, newSize, depth - 1)
-        sierpinski(x - newSize / 2, y + newSize * Math.sqrt(3) / 2, newSize, depth - 1)
-        sierpinski(x + newSize / 2, y + newSize * Math.sqrt(3) / 2, newSize, depth - 1)
+            if (depth === 0) {
+                drawTriangle(x, y, size);
+                return;
+            }
+            const newSize = size / 2;
+            sierpinski(x, y, newSize, depth - 1);
+            sierpinski(x - newSize / 2, y + newSize * Math.sqrt(3) / 2, newSize, depth - 1);
+            sierpinski(x + newSize / 2, y + newSize * Math.sqrt(3) / 2, newSize, depth - 1);
         }
 
-        function clear() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        function sierpinskiChaos(iterations, animate = false) {
+            const size = canvas.width * 0.8;
+            const height = size * Math.sqrt(3) / 2;
+            const vertices = [
+                [canvas.width / 2, 20],
+                [canvas.width / 2 - size / 2, 20 + height],
+                [canvas.width / 2 + size / 2, 20 + height]
+            ];
+
+            ctx.fillStyle = config.color;
+
+            if (animate) {
+                for (let i = 0; i < 500; i++) {
+                    const [vx, vy] = vertices[Math.floor(Math.random() * 3)];
+                    chaosX = (chaosX + vx) / 2;
+                    chaosY = (chaosY + vy) / 2;
+                    ctx.fillRect((chaosX + offsetX) * scale, (chaosY + offsetY) * scale, 1, 1);
+                }
+            } else {
+                let x = chaosX;
+                let y = chaosY;
+                for (let i = 0; i < iterations; i++) {
+                    const [vx, vy] = vertices[Math.floor(Math.random() * 3)];
+                    x = (x + vx) / 2;
+                    y = (y + vy) / 2;
+                    ctx.fillRect((x + offsetX) * scale, (y + offsetY) * scale, 1, 1);
+                }
+            }
         }
 
         function render() {
-        clear()
-        sierpinski(canvas.width / 2, 20, canvas.width * 0.8, parseInt(config.depth))
+            clear();
+            if (config.mode === 'recursive') {
+                sierpinski(canvas.width / 2, 20, canvas.width * 0.8, parseInt(config.depth));
+            } else {
+                sierpinskiChaos(config.iterations, false);
+            }
         }
 
-        render()
+        function animateLoop(time = 0) {
+            if (config.animate && config.mode === 'chaos') {
+                sierpinskiChaos(config.iterations, true);
+            } else if (!config.animate) {
+                render();
+            }
+            requestAnimationFrame(animateLoop);
+        }
+
+        function setupGUI() {
+            const gui = new dat.GUI();
+            gui.add(config, 'zoom', 0.1, 10, 0.01).name("Zoom").onChange(val => {
+                scale = val;
+                render();
+            });
+            gui.add(config, 'depth', 0, 8, 1).name("Fractal Depth").onChange(render);
+            gui.addColor(config, 'color').name("Stroke Color").onChange(render);
+            gui.add(config, 'mode', ['recursive', 'chaos']).name("Render Mode").onChange(() => {
+                chaosX = Math.random() * canvas.width;
+                chaosY = Math.random() * canvas.height;
+                render();
+            });
+            gui.add(config, 'iterations', 1000, 50000, 1000).name("Chaos Iterations").onChange(render);
+            gui.add(config, 'animate').name("Animate");
+        }
+
+        canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            const zoomAmount = 0.1;
+            if (e.deltaY < 0) scale = Math.min(scale + zoomAmount, 10);
+            else scale = Math.max(0.1, scale - zoomAmount);
+            config.zoom = parseFloat(scale.toFixed(2));
+            render();
+        });
+
+        canvas.addEventListener('mousedown', e => {
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+        });
+        canvas.addEventListener('mouseup', () => isDragging = false);
+        canvas.addEventListener('mouseout', () => isDragging = false);
+        canvas.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            offsetX += dx / scale;
+            offsetY += dy / scale;
+            render();
+        });
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            config.color = e.matches ? '#ffffff' : '#000000';
+            render();
+        });
+
+        setupGUI();
+        animateLoop();
     </script>
 </body>
 </html>
