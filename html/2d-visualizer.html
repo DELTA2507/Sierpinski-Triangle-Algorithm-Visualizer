@@ -305,19 +305,30 @@
 
         function setupGUI() {
             const gui = new dat.GUI();
+
             gui.add(config, 'zoom', 0.1, 10, 0.01).name("Zoom").onChange(val => {
                 scale = val;
                 render();
             });
-            gui.add(config, 'depth', 0, 8, 1).name("Fractal Depth").onChange(render);
+
+            if (config.mode === 'recursive') {
+                gui.add(config, 'depth', 0, 8, 1).name("Fractal Depth").onChange(render);
+            }
+
             gui.addColor(config, 'color').name("Stroke Color").onChange(render);
-            gui.add(config, 'mode', ['recursive', 'chaos']).name("Render Mode").onChange(() => {
+
+            gui.add(config, 'mode', ['recursive', 'chaos']).name("Render Mode").onChange(value => {
                 chaosX = Math.random() * canvas.width;
                 chaosY = Math.random() * canvas.height;
                 render();
+                gui.destroy();  // 🔁 reinicia la GUI
+                setupGUI();     // 👈 vuelve a generarla con los controles correctos
             });
-            gui.add(config, 'iterations', 1000, 50000, 1000).name("Chaos Iterations").onChange(render);
-            gui.add(config, 'animate').name("Animate");
+
+            if (config.mode === 'chaos') {
+                gui.add(config, 'iterations', 1000, 50000, 1000).name("Chaos Iterations").onChange(render);
+                gui.add(config, 'animate').name("Animate");
+            }
         }
 
         canvas.addEventListener('wheel', e => {
