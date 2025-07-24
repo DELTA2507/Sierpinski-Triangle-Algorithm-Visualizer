@@ -306,16 +306,12 @@
         function setupGUI() {
             const gui = new dat.GUI();
 
+            gui.addColor(config, 'color').name("Stroke Color").onChange(render);
+
             gui.add(config, 'zoom', 0.1, 10, 0.01).name("Zoom").onChange(val => {
                 scale = val;
                 render();
             });
-
-            if (config.mode === 'recursive subdivision') {
-                gui.add(config, 'depth', 0, 8, 1).name("Fractal Depth").onChange(render);
-            }
-
-            gui.addColor(config, 'color').name("Stroke Color").onChange(render);
 
             gui.add(config, 'mode', ['recursive subdivision', 'chaos']).name("Render Mode").onChange(value => {
                 chaosX = Math.random() * canvas.width;
@@ -325,6 +321,10 @@
                 setupGUI();     // 👈 vuelve a generarla con los controles correctos
             });
 
+            if (config.mode === 'recursive subdivision') {
+                gui.add(config, 'depth', 0, 8, 1).name("Fractal Depth").onChange(render);
+            }
+            
             if (config.mode === 'chaos') {
                 gui.add(config, 'iterations', 1000, 50000, 1000).name("Chaos Iterations").onChange(render);
                 gui.add(config, 'animate').name("Animate");
