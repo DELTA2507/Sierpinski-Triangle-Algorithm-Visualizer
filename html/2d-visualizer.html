@@ -208,7 +208,7 @@
             depth: 3,
             zoom: 1,
             color: getDefaultStrokeColor(),
-            mode: 'recursive',
+            mode: 'recursive subdivision',
             iterations: 10000,
             animate: false
         };
@@ -287,7 +287,7 @@
 
         function render() {
             clear();
-            if (config.mode === 'recursive') {
+            if (config.mode === 'recursive subdivision') {
                 sierpinski(canvas.width / 2, 20, canvas.width * 0.8, parseInt(config.depth));
             } else {
                 sierpinskiChaos(config.iterations, false);
@@ -311,13 +311,13 @@
                 render();
             });
 
-            if (config.mode === 'recursive') {
+            if (config.mode === 'recursive subdivision') {
                 gui.add(config, 'depth', 0, 8, 1).name("Fractal Depth").onChange(render);
             }
 
             gui.addColor(config, 'color').name("Stroke Color").onChange(render);
 
-            gui.add(config, 'mode', ['recursive', 'chaos']).name("Render Mode").onChange(value => {
+            gui.add(config, 'mode', ['recursive subdivision', 'chaos']).name("Render Mode").onChange(value => {
                 chaosX = Math.random() * canvas.width;
                 chaosY = Math.random() * canvas.height;
                 render();
