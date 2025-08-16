@@ -244,47 +244,70 @@
             ctx.stroke();
         }
 
+        // Función recursiva para dibujar el triángulo de Sierpinski por subdivisión
         function sierpinski(x, y, size, depth) {
-            if (depth === 0) {
-                drawTriangle(x, y, size);
-                return;
+            if (depth === 0) { // caso base: cuando ya no hay más subdivisiones
+                drawTriangle(x, y, size); // dibuja un triángulo sólido en esa posición
+                return; // termina la recursión en este nivel
             }
-            const newSize = size / 2;
-            sierpinski(x, y, newSize, depth - 1);
-            sierpinski(x - newSize / 2, y + newSize * Math.sqrt(3) / 2, newSize, depth - 1);
-            sierpinski(x + newSize / 2, y + newSize * Math.sqrt(3) / 2, newSize, depth - 1);
+            const newSize = size / 2; // calcula el tamaño del triángulo reducido a la mitad
+            sierpinski(x, y, newSize, depth - 1); // triángulo superior
+            sierpinski( // triángulo inferior izquierdo
+                x - newSize / 2, // se desplaza a la izquierda
+                y + newSize * Math.sqrt(3) / 2, // baja en altura de triángulo equilátero
+                newSize,
+                depth - 1
+            );
+            sierpinski( // triángulo inferior derecho
+                x + newSize / 2, // se desplaza a la derecha
+                y + newSize * Math.sqrt(3) / 2, // baja en altura de triángulo equilátero
+                newSize,
+                depth - 1
+            );
         }
 
+        // Función para dibujar el triángulo de Sierpinski por puntos de caos
         function sierpinskiChaos(iterations, animate = false) {
+            // Define el tamaño del triángulo base (80% del ancho del canvas)
             const size = canvas.width * 0.8;
-            const height = size * Math.sqrt(3) / 2;
+            const height = size * Math.sqrt(3) / 2; // altura de un triángulo equilátero
+
+            // Vértices del triángulo principal (arriba, izquierda, derecha)
             const vertices = [
-                [canvas.width / 2, 20],
-                [canvas.width / 2 - size / 2, 20 + height],
-                [canvas.width / 2 + size / 2, 20 + height]
+                [canvas.width / 2, 20], // vértice superior
+                [canvas.width / 2 - size / 2, 20 + height], // vértice inferior izquierdo
+                [canvas.width / 2 + size / 2, 20 + height]  // vértice inferior derecho
             ];
 
+            // Define el color de los puntos que se van a dibujar
             ctx.fillStyle = config.color;
 
-            if (animate) {
+            if (animate) { // modo animación: dibuja en "bloques" de 500 puntos
                 for (let i = 0; i < 500; i++) {
+                    // selecciona un vértice al azar
                     const [vx, vy] = vertices[Math.floor(Math.random() * 3)];
+                    // mueve el punto a la mitad de camino entre su posición actual y el vértice elegido
                     chaosX = (chaosX + vx) / 2;
                     chaosY = (chaosY + vy) / 2;
+                    // dibuja un pixel (rectángulo de 1x1) en esa posición
                     ctx.fillRect((chaosX + offsetX) * scale, (chaosY + offsetY) * scale, 1, 1);
                 }
-            } else {
+            } else { // modo estático: dibuja la cantidad exacta de iteraciones
                 let x = chaosX;
                 let y = chaosY;
                 for (let i = 0; i < iterations; i++) {
+                    // selecciona un vértice al azar
                     const [vx, vy] = vertices[Math.floor(Math.random() * 3)];
+                    // mueve el punto hacia la mitad del camino con ese vértice
                     x = (x + vx) / 2;
                     y = (y + vy) / 2;
+                    // dibuja el pixel en la posición calculada
                     ctx.fillRect((x + offsetX) * scale, (y + offsetY) * scale, 1, 1);
                 }
             }
         }
 
+        // Renderización del triángulo en pantalla
         function render() {
             clear();
             if (config.mode === 'recursive subdivision') {
