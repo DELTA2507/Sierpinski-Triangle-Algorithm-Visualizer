@@ -4,5 +4,8 @@
       "source": "/",
       "destination": "/html/2d-visualizer.html"
     }
-  ]
+  ],
+  "staticFiles": {
+    "ignore": []
+  }
 }
