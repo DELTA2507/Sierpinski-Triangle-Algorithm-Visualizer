@@ -1,9 +1,7 @@
 {
   "rewrites": [
-    {
-      "source": "/",
-      "destination": "/html/2d-visualizer.html"
-    }
+    { "source": "/", "destination": "/html/2d-visualizer.html" },
+    { "source": "/3d", "destination": "/html/3d-visualizer.html" }
   ],
   "staticFiles": {
     "ignore": []
