@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/html/2d-visualizer.html"
+    }
+  ]
+}
